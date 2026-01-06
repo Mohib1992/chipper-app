@@ -2,6 +2,7 @@ import { defineStore, acceptHMRUpdate } from 'pinia'
 
 export const usePost = defineStore('post', () => {
     const { $api } = useNuxtApp()
+    const { fetchFavorites, isFollowed} = useFavorite()
     const posts = ref([])
     const loading = ref(false)
     const errors = ref({})
@@ -9,6 +10,10 @@ export const usePost = defineStore('post', () => {
     const form = reactive({
         title: '',
         body: ''
+    })
+
+    onMounted(() => {
+        fetchFavorites()
     })
 
     function clearForm() {
@@ -21,7 +26,10 @@ export const usePost = defineStore('post', () => {
         loading.value = true
         try {
             const response = await $api.get('posts')
-            posts.value = response.data
+            posts.value = response.data.map(post => {
+                post.user.isFollowed = isFollowed(post.user.id)
+                return post
+            })
         } catch (e) {
             console.error(e)
         } finally {
