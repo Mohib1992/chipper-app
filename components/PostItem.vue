@@ -16,6 +16,11 @@ const toggleFollow = () => {
   props.post.user.isFollowed = !props.post.user.isFollowed
   emit('toggleFollow', props.post.user)
 }
+
+const toggleFavorite = () => {
+  props.post.isFavorite = !props.post.isFavorite
+  emit('toggleFavorite', props.post)
+}
 </script>
 
 <template>
@@ -34,10 +39,10 @@ const toggleFollow = () => {
     <p>
       {{ post.body }}
     </p>
-    <button class="bg-red-200 text-red-500 flex items-center justify-center gap-2 p-4 rounded-lg">
-      <HeartIcon class="h-6 stroke-current" />
+    <button @click="toggleFavorite" class="bg-red-200 text-red-500 flex items-center justify-center gap-2 p-4 rounded-lg">
+      <HeartIcon class="h-6 stroke-current" :class="post.isFavorite ? 'fill-current' : ''" />
       <span class="font-bold">
-        Add to my favorites
+        {{ post.isFavorite ? 'Remove from favorites' : 'Add to my favorites' }}
       </span>
     </button>
   </div>

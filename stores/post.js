@@ -2,7 +2,7 @@ import { defineStore, acceptHMRUpdate } from 'pinia'
 
 export const usePost = defineStore('post', () => {
     const { $api } = useNuxtApp()
-    const { fetchFavorites, isFollowed} = useFavorite()
+    const { fetchFavorites, isFollowed, isPostFavorite} = useFavorite()
     const posts = ref([])
     const loading = ref(false)
     const errors = ref({})
@@ -28,6 +28,7 @@ export const usePost = defineStore('post', () => {
             const response = await $api.get('posts')
             posts.value = response.data.map(post => {
                 post.user.isFollowed = isFollowed(post.user.id)
+                post.isFavorite = isPostFavorite(post.id)
                 return post
             })
         } catch (e) {

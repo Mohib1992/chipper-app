@@ -8,6 +8,10 @@ export const useFavorite = defineStore('favorite', () => {
         return favorites.value.users.some(user => user.id === userId)
     }
 
+    const isPostFavorite = (postId) => {
+        return favorites.value.posts.some(post => post.id === postId)
+    }
+
     async function fetchFavorites() {
         try {
             const response = await $api.get('favorites')
@@ -34,11 +38,30 @@ export const useFavorite = defineStore('favorite', () => {
         }
     }
 
+    async function toggleFavorite(post) {
+        const postId = post.id
+        const favorited = isPostFavorite(postId)
+
+        try {
+            if (favorited) {
+                await $api.delete(`posts/${postId}/favorite`)
+                favorites.value.posts = favorites.value.posts.filter(p => p.id !== postId)
+            } else {
+                await $api.post(`posts/${postId}/favorite`)
+                favorites.value.posts.push(post)
+            }
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
     return {
         favorites,
         fetchFavorites,
         toggleFollow,
+        toggleFavorite,
         isFollowed,
+        isPostFavorite,
     }
 })
 
