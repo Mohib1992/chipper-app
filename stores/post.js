@@ -6,6 +6,8 @@ export const usePost = defineStore('post', () => {
     const posts = ref([])
     const loading = ref(false)
     const errors = ref({})
+    const newPostsCount = ref(0)
+    const unSyncedPosts = ref([])
 
     const form = reactive({
         title: '',
@@ -20,6 +22,28 @@ export const usePost = defineStore('post', () => {
         form.title = ''
         form.body = ''
         errors.value = {}
+    }
+
+    async function checkNewPosts() {
+        const response = await $api.get('posts')
+        unSyncedPosts.value = response.data.filter(p => {
+            return !posts.value.some(post => post.id === p.id)
+        })
+        newPostsCount.value = unSyncedPosts.value.length
+    }
+
+    async function synchPosts() {    
+        unSyncedPosts.value.forEach(post => {
+            post.user.isFollowed = isFollowed(post.user.id)
+            post.isFavorite = isPostFavorite(post.id)
+        })
+        posts.value = [...unSyncedPosts.value, ...posts.value]
+        unSyncedPosts.value = []
+        newPostsCount.value = 0 
+    }   
+
+    function hasNewPosts() {
+        return newPostsCount.value > 0
     }
 
     async function fetchPosts() {
@@ -60,6 +84,10 @@ export const usePost = defineStore('post', () => {
     }
 
     return {
+        newPostsCount,
+        hasNewPosts,
+        checkNewPosts,
+        synchPosts,
         posts,
         loading,
         form,
