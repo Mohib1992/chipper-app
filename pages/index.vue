@@ -9,7 +9,6 @@ const user = useUser()
 const post = usePost()
 const favorite = useFavorite()
 const { reloadTimer, startInterval, interval } = useSyncPosts(30)
-favorite.fetchFavorites()
 post.fetchPosts()
 
 function handleToggleFollow(user) {

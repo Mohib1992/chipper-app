@@ -3,10 +3,12 @@ import { pickBy } from 'lodash-es'
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
 
-  function request (method, url, params, headers) {
+  function request(method, url, params, headers) {
     const tokenCookie = useCookie('jwt')
     const couponCookie = useCookie('coupon')
     const utmCookie = useCookie('utm')
+
+    const isFormData = params instanceof FormData
 
     return $fetch(url, {
       method,
@@ -16,40 +18,40 @@ export default defineNuxtPlugin(() => {
       headers: pickBy({
         ...headers,
         Accept: 'application/json',
-        'Content-Type': 'application/json',
+        'Content-Type': isFormData ? null : 'application/json',
         Authorization: tokenCookie?.value ? `Bearer ${tokenCookie.value}` : null,
         'X-Coupon': couponCookie?.value,
         'X-UTM': JSON.stringify(toRaw(utmCookie?.value))
       }),
-      onRequest (arg) {
+      onRequest(arg) {
         console.info('[fetch request]', arg.request)
       },
-      onRequestError (arg) {
+      onRequestError(arg) {
         console.info('[fetch request error]', arg.request, arg.error)
       },
-      onResponse (arg) {
+      onResponse(arg) {
         console.info('[fetch response]', arg.request, arg.response.status)
       },
-      onResponseError (arg) {
+      onResponseError(arg) {
         console.info('[fetch response error]', arg.request, arg.response.status)
       }
     })
   }
 
   const api = {
-    get (url, params = {}, headers = {}) {
+    get(url, params = {}, headers = {}) {
       return request('GET', url, params, headers)
     },
-    post (url, params = {}, headers = {}) {
+    post(url, params = {}, headers = {}) {
       return request('POST', url, params, headers)
     },
-    patch (url, params = {}, headers = {}) {
+    patch(url, params = {}, headers = {}) {
       return request('PATCH', url, params, headers)
     },
-    put (url, params = {}, headers = {}) {
+    put(url, params = {}, headers = {}) {
       return request('PUT', url, params, headers)
     },
-    delete (url, params = {}, headers = {}) {
+    delete(url, params = {}, headers = {}) {
       return request('DELETE', url, params, headers)
     }
   }

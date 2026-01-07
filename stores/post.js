@@ -2,7 +2,8 @@ import { defineStore, acceptHMRUpdate } from 'pinia'
 
 export const usePost = defineStore('post', () => {
     const { $api } = useNuxtApp()
-    const { fetchFavorites, isFollowed, isPostFavorite} = useFavorite()
+    const config = useRuntimeConfig()
+    const { fetchFavorites, isFollowed, isPostFavorite } = useFavorite()
     const posts = ref([])
     const loading = ref(false)
     const errors = ref({})
@@ -11,7 +12,8 @@ export const usePost = defineStore('post', () => {
 
     const form = reactive({
         title: '',
-        body: ''
+        body: '',
+        images: null
     })
 
     onMounted(() => {
@@ -21,6 +23,7 @@ export const usePost = defineStore('post', () => {
     function clearForm() {
         form.title = ''
         form.body = ''
+        form.images = null
         errors.value = {}
     }
 
@@ -32,15 +35,16 @@ export const usePost = defineStore('post', () => {
         newPostsCount.value = unSyncedPosts.value.length
     }
 
-    async function synchPosts() {    
+    async function synchPosts() {
         unSyncedPosts.value.forEach(post => {
             post.user.isFollowed = isFollowed(post.user.id)
             post.isFavorite = isPostFavorite(post.id)
+            post.images = post.images.map(image => fixImageUrl(image))
         })
         posts.value = [...unSyncedPosts.value, ...posts.value]
         unSyncedPosts.value = []
-        newPostsCount.value = 0 
-    }   
+        newPostsCount.value = 0
+    }
 
     function hasNewPosts() {
         return newPostsCount.value > 0
@@ -53,6 +57,7 @@ export const usePost = defineStore('post', () => {
             posts.value = response.data.map(post => {
                 post.user.isFollowed = isFollowed(post.user.id)
                 post.isFavorite = isPostFavorite(post.id)
+                post.images = post.images.map(image => fixImageUrl(image))
                 return post
             })
         } catch (e) {
@@ -62,15 +67,25 @@ export const usePost = defineStore('post', () => {
         }
     }
 
+    function fixImageUrl(image) {
+        const url = typeof image === 'string' ? image : (image?.url || '')
+        return url.replace('http://localhost', config.public.API_URL.replace('/api', ''))
+    }
+
     async function createPost() {
         loading.value = true
         errors.value = {}
 
         try {
-            const response = await $api.post('posts', {
-                title: form.title,
-                body: form.body
-            })
+            const formData = new FormData()
+            formData.append('title', form.title)
+            formData.append('body', form.body)
+            if (form.images) {
+                formData.append('images[]', form.images)
+            }
+
+            const response = await $api.post('posts', formData)
+            response.data.images = response.data.images.map(image => fixImageUrl(image))
             posts.value.unshift(response.data)
 
             clearForm()
